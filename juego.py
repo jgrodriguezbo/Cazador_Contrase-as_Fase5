@@ -2,82 +2,61 @@ import random
 import string
 
 
-# ---------------------------------
+# =========================
 # EXCEPCIONES PERSONALIZADAS
-# ---------------------------------
+# =========================
 
-class ErrorLongitud(Exception):
+class LongitudInvalidaError(Exception):
     pass
 
 
-class ErrorContraseña(Exception):
+class EntradaNoNumericaError(Exception):
     pass
 
 
-# ---------------------------------
+class ContrasenaInvalidaError(Exception):
+    pass
+
+
+# =========================
 # CLASE CONTRASEÑA
-# ---------------------------------
+# =========================
 
-class Contraseña:
-
-    especiales = "¿¡?=)(/¨*+-%&$#!"
+class Contrasena:
 
     def __init__(self, longitud):
-
-        if not str(longitud).isdigit():
-            raise ErrorLongitud("La longitud debe ser numérica")
-
-        self.longitud = int(longitud)
-
-        if self.longitud < 8:
-            raise ErrorLongitud(
-                "La longitud mínima es 8 caracteres"
-            )
+        self.longitud = longitud
+        self.contrasena = ""
 
     def generar(self):
 
-        mayuscula = random.choice(string.ascii_uppercase)
+        letras = string.ascii_letters
+        numeros = string.digits
+        especiales = "!@#$%^&*()-_=+[]{};:,.<>?/"
 
-        minuscula = random.choice(string.ascii_lowercase)
+        caracteres = letras + numeros + especiales
 
-        numero = random.choice(string.digits)
+        while True:
 
-        especial = random.choice(self.especiales)
+            password = ""
 
-        restantes = self.longitud - 4
+            for i in range(self.longitud):
+                password += random.choice(caracteres)
 
-        todos = (
-            string.ascii_letters
-            + string.digits
-            + self.especiales
-        )
+            if self.validar(password):
+                self.contrasena = password
+                return self.contrasena
 
-        contraseña = [
-            mayuscula,
-            minuscula,
-            numero,
-            especial
-        ]
-
-        while len(contraseña) < self.longitud:
-
-            caracter = random.choice(todos)
-
-            if caracter not in contraseña:
-                contraseña.append(caracter)
-
-        random.shuffle(contraseña)
-
-        return "".join(contraseña)
-
-    def validar(self, contraseña):
+    def validar(self, password):
 
         tiene_mayuscula = False
         tiene_minuscula = False
         tiene_numero = False
         tiene_especial = False
 
-        for caracter in contraseña:
+        especiales = "!@#$%^&*()-_=+[]{};:,.<>?/"
+
+        for caracter in password:
 
             if caracter.isupper():
                 tiene_mayuscula = True
@@ -88,113 +67,129 @@ class Contraseña:
             elif caracter.isdigit():
                 tiene_numero = True
 
-            elif caracter in self.especiales:
+            elif caracter in especiales:
                 tiene_especial = True
 
-        if (
-            tiene_mayuscula
-            and tiene_minuscula
-            and tiene_numero
-            and tiene_especial
-            and len(set(contraseña)) == len(contraseña)
-        ):
-            return True
+        if len(password) < 8:
+            raise ContrasenaInvalidaError(
+                "La contraseña debe tener mínimo 8 caracteres"
+            )
 
-        return False
+        if not tiene_mayuscula:
+            raise ContrasenaInvalidaError(
+                "La contraseña necesita una mayúscula"
+            )
+
+        if not tiene_minuscula:
+            raise ContrasenaInvalidaError(
+                "La contraseña necesita una minúscula"
+            )
+
+        if not tiene_numero:
+            raise ContrasenaInvalidaError(
+                "La contraseña necesita un número"
+            )
+
+        if not tiene_especial:
+            raise ContrasenaInvalidaError(
+                "La contraseña necesita un carácter especial"
+            )
+
+        repetidos = False
+
+        for letra in password:
+            if password.count(letra) > 1:
+                repetidos = True
+
+        if repetidos:
+            raise ContrasenaInvalidaError(
+                "La contraseña no debe tener caracteres repetidos"
+            )
+
+        return True
 
 
-# ---------------------------------
+# =========================
 # CLASE COFRE
-# ---------------------------------
+# =========================
 
 class Cofre:
 
-    def __init__(self, tipo, puntos):
+    def __init__(self):
 
-        self.tipo = tipo
-        self.puntos = puntos
+        opcion = random.randint(1, 3)
+
+        if opcion == 1:
+            self.tipo = "Común"
+            self.puntos = 10
+
+        elif opcion == 2:
+            self.tipo = "Raro"
+            self.puntos = 25
+
+        else:
+            self.tipo = "Legendario"
+            self.puntos = 50
 
     def mostrar(self):
 
         return (
-            f"Cofre obtenido: {self.tipo}"
-            f" | Puntos: {self.puntos}"
+            "Cofre obtenido: "
+            + self.tipo
+            + " | Puntos: "
+            + str(self.puntos)
         )
 
 
-# ---------------------------------
+# =========================
 # CLASE JUEGO
-# ---------------------------------
+# =========================
 
 class JuegoCazador:
 
     def __init__(self):
-
         self.puntaje = 0
-
-        self.cofres = [
-            Cofre("Común", 10),
-            Cofre("Raro", 25),
-            Cofre("Legendario", 50)
-        ]
-
-        self.cofre_maldito = Cofre(
-            "Maldito",
-            -20
-        )
 
     def jugar(self):
 
         continuar = "s"
 
-        print("\n===== CAZADOR DE CONTRASEÑAS =====\n")
+        print("\n===== CAZADOR DE CONTRASEÑAS =====")
 
         while continuar.lower() == "s":
 
             try:
 
-                longitud = input(
-                    "Ingrese la longitud de la contraseña: "
+                entrada = input(
+                    "\nIngrese la longitud de la contraseña: "
                 )
 
-                contraseña_obj = Contraseña(longitud)
+                if not entrada.isdigit():
+                    raise EntradaNoNumericaError(
+                        "La entrada debe ser numérica"
+                    )
 
-                contraseña = contraseña_obj.generar()
+                longitud = int(entrada)
+
+                if longitud < 8:
+                    raise LongitudInvalidaError(
+                        "La longitud mínima es 8 caracteres"
+                    )
+
+                contrasena = Contrasena(longitud)
+
+                password_generada = contrasena.generar()
 
                 print(
                     "\nContraseña generada:",
-                    contraseña
+                    password_generada
                 )
-
-                if contraseña_obj.validar(contraseña):
-
-                    cofre = random.choice(self.cofres)
-
-                else:
-
-                    raise ErrorContraseña(
-                        "Contraseña inválida"
-                    )
-
-            except ErrorLongitud as e:
-
-                print("\nError:", e)
-
-                cofre = self.cofre_maldito
-
-            except ErrorContraseña as e:
-
-                print("\nError:", e)
-
-                cofre = self.cofre_maldito
-
-            else:
 
                 print(
                     "\nContraseña válida correctamente"
                 )
 
-            finally:
+                cofre = Cofre()
 
                 self.puntaje += cofre.puntos
 
@@ -205,18 +200,53 @@ class JuegoCazador:
                     self.puntaje
                 )
 
+            except EntradaNoNumericaError as error:
+
+                print("\nError:", error)
+
+            except LongitudInvalidaError as error:
+
+                print("\nError:", error)
+
+            except ContrasenaInvalidaError as error:
+
+                print("\nError:", error)
+
+                print(
+                    "\nCofre obtenido: Maldito | Puntos: -20"
+                )
+
+                self.puntaje -= 20
+
+                print(
+                    "Puntaje acumulado:",
+                    self.puntaje
+                )
+
+            except Exception as error:
+
+                print(
+                    "\nOcurrió un error inesperado:",
+                    error
+                )
+
+            finally:
+
                 continuar = input(
                     "\n¿Desea seguir jugando? (s/n): "
                 )
 
         print("\n===== FIN DEL JUEGO =====")
-        print("Puntaje final:", self.puntaje)
+
+        print(
+            "Puntaje final:",
+            self.puntaje
+        )
 
 
-# ---------------------------------
+# =========================
 # EJECUCIÓN PRINCIPAL
-# ---------------------------------
+# =========================
 
 juego = JuegoCazador()
-
 juego.jugar()
